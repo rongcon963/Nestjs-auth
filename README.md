@@ -43,6 +43,10 @@ $ npm run start:dev
 
 # production mode
 $ npm run start:prod
+
+# migration
+$ npm run migration:create --name=your_migration_name
+$ npm run migration:run
 ```
 
 ## Test
