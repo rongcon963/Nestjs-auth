@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import * as bcrypt from 'bcrypt';
+import { LoginUserDto } from 'src/auth/dto/login-user.dto';
 
 @Injectable()
 export class UserService {
@@ -12,8 +14,16 @@ export class UserService {
     ) {}
 
     async createUser(createUserDto: CreateUserDto): Promise<User> {
+        // check exists
+        const exists = await this.userRepository.findOneBy({
+            email: createUserDto.email,
+        });
+        if(exists) {
+            throw new HttpException('User already exists', HttpStatus.BAD_REQUEST);
+        }
+        createUserDto.password = await bcrypt.hash(createUserDto.password, 10);
         const user = await this.userRepository.create(createUserDto);
-        return this.userRepository.save(user)
+        return user;
     }
 
     async findAllUser(): Promise<User[]> {
@@ -22,6 +32,31 @@ export class UserService {
 
     async viewUser(id: number): Promise<User> {
         return await this.userRepository.findOneBy({ id });
+    }
+
+    async findByLogin(loginUserDto: LoginUserDto) {
+        const {email, password} = loginUserDto;
+        const user = await this.userRepository.findOneBy({
+            email: email,
+        })
+
+        if (!user) {
+            throw new HttpException('User not found', HttpStatus.UNAUTHORIZED);
+        }
+
+        const is_equal = bcrypt.compareSync(password, user.password);
+
+        if (!is_equal) {
+            throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+        }
+
+        return user;
+    }
+
+    async findByEmail(email) {
+        return await this.userRepository.findOneBy({
+          email: email,
+        });
     }
 
     async updateUser(id: number, updateUserDto: UpdateUserDto): Promise<User> {
