@@ -18,12 +18,15 @@ export class UserService {
         const exists = await this.userRepository.findOneBy({
             email: createUserDto.email,
         });
+
         if(exists) {
             throw new HttpException('User already exists', HttpStatus.BAD_REQUEST);
         }
-        createUserDto.password = await bcrypt.hash(createUserDto.password, 10);
+
         const user = await this.userRepository.create(createUserDto);
-        return user;
+        user.password = await bcrypt.hash(createUserDto.password, 10);
+        
+        return await this.userRepository.save(user);
     }
 
     async findAllUser(): Promise<User[]> {
