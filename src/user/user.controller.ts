@@ -19,7 +19,7 @@ export class UserController {
     }
 
     @Get(':id')
-    @UseGuards(AuthGuard('jwt'))
+    @UseGuards(AuthGuard())
     async findOne(@Param('id') id: string) {
         return await this.userService.viewUser(+id);
     }
@@ -33,12 +33,4 @@ export class UserController {
     async remove(@Param('id') id: string) {
         return await this.userService.removeUser(+id);
     }
-
-    @Get('profile')
-    @UseGuards(AuthGuard('jwt'))
-    async getProfile(@Req() req: any) {
-        console.log(req);
-        return req.user;
-    }
-
 }

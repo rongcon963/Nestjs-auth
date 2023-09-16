@@ -7,23 +7,24 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 
-@Global()
+const jwtFactory = {
+  useFactory: async (configService: ConfigService) => ({
+    secret: configService.get('SECRETKEY'),
+    signOptions: {
+      expiresIn: configService.get('EXPIRESIN'),
+    },
+  }),
+  inject: [ConfigService],
+}
+
 @Module({
   imports: [
     PassportModule.register({
-      defaultStrategy: 'jwt',
-      property: 'user',
-      session: false,
+      defaultStrategy: 'jwt'
     }),
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get('SECRETKEY'),
-        signOptions: {
-          expiresIn: configService.get('EXPIRESIN'),
-        },
-      }),
-      inject: [ConfigService],
+    JwtModule.register({
+      secret: 'example',
+      signOptions: { expiresIn: 3600 },
     }),
     UserModule,
   ],
@@ -32,6 +33,6 @@ import { JwtStrategy } from './jwt.strategy';
     AuthService,
     JwtStrategy,
   ],
-  exports: [AuthService, JwtStrategy]
+  exports: [AuthService]
 })
 export class AuthModule {}
